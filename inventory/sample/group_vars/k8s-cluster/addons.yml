@@ -56,6 +56,23 @@ ingress_nginx_enabled: false
 # ingress_nginx_configmap_udp_services:
 #   53: "kube-system/kube-dns:53"
 
+# traefik ingress controller deployment
+ingress_traefik_enabled: false
+# ingress_traefik_host_network: false
+# ingress_traefik_nodeselector:
+#   node-role.kubernetes.io/master: "true"
+# ingress_traefik_namespace: "ingress-traefik"
+# ingress_traefik_insecure_port: 80
+# ingress_traefik_secure_port: 443
+# ingress_traefik_admin_port: 443
+# ingress_traefik_configmap:
+#   map-hash-bucket-size: "128"
+#   ssl-protocols: "SSLv2"
+# ingress_traefik_configmap_tcp_services:
+#   9000: "default/example-go:8080"
+# ingress_traefik_configmap_udp_services:
+#   53: "kube-system/kube-dns:53"
+
 # Cert manager deployment
 cert_manager_enabled: false
 # cert_manager_namespace: "cert-manager"

@@ -1,0 +1,17 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: ingress-traefik
+  namespace: {{ ingress_traefik_namespace }}
+  labels:
+    app.kubernetes.io/name: ingress-traefik
+    app.kubernetes.io/part-of: ingress-traefik
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ingress-traefik
+subjects:
+  - kind: ServiceAccount
+    name: ingress-traefik
+    namespace: {{ ingress_traefik_namespace }}

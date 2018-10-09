@@ -1,0 +1,10 @@
+---
+ingress_traefik_namespace: "ingress-traefik"
+ingress_traefik_host_network: false
+ingress_traefik_nodeselector:
+  node-role.kubernetes.io/master: "true"
+ingress_traefik_insecure_port: 80
+ingress_traefik_secure_port: 443
+ingress_traefik_configmap: {}
+ingress_traefik_configmap_tcp_services: {}
+ingress_traefik_configmap_udp_services: {}

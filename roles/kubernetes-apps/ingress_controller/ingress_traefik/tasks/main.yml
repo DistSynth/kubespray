@@ -1,0 +1,73 @@
+---
+
+- name: traefik Ingress Controller | Remove legacy addon dir and manifests
+  file:
+    path: "{{ kube_config_dir }}/addons/ingress_traefik"
+    state: absent
+  when:
+    - inventory_hostname == groups['kube-master'][0]
+  tags:
+    - upgrade
+
+- name: traefik Ingress Controller | Remove legacy namespace
+  shell: |
+    {{ bin_dir }}/kubectl delete namespace {{ ingress_traefik_namespace }}
+  ignore_errors: yes
+  when:
+    - inventory_hostname == groups['kube-master'][0]
+  tags:
+    - upgrade
+
+- name: traefik Ingress Controller | Create addon dir
+  file:
+    path: "{{ kube_config_dir }}/addons/ingress_traefik"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - inventory_hostname == groups['kube-master'][0]
+
+- name: traefik Ingress Controller | Templates list
+  set_fact:
+    ingress_traefik_templates:
+      - { name: 00-namespace, file: 00-namespace.yml, type: ns }
+      - { name: deploy-default-backend, file: deploy-default-backend.yml, type: deploy }
+      - { name: svc-default-backend, file: svc-default-backend.yml, type: svc }
+      - { name: cm-ingress-traefik, file: cm-ingress-traefik.yml, type: cm }
+      - { name: cm-tcp-services, file: cm-tcp-services.yml, type: cm }
+      - { name: cm-udp-services, file: cm-udp-services.yml, type: cm }
+      - { name: sa-ingress-traefik, file: sa-ingress-traefik.yml, type: sa }
+      - { name: clusterrole-ingress-traefik, file: clusterrole-ingress-traefik.yml, type: clusterrole }
+      - { name: clusterrolebinding-ingress-traefik, file: clusterrolebinding-ingress-traefik.yml, type: clusterrolebinding }
+      - { name: role-ingress-traefik, file: role-ingress-traefik.yml, type: role }
+      - { name: rolebinding-ingress-traefik, file: rolebinding-ingress-traefik.yml, type: rolebinding }
+      - { name: ds-ingress-traefik-controller, file: ds-ingress-traefik-controller.yml, type: ds }
+    ingress_traefik_templates_for_psp:
+      - { name: psp-ingress-traefik, file: psp-ingress-traefik.yml, type: podsecuritypolicy }
+
+- name: traefik Ingress Controller | Append extra templates to traefik Ingress Templates list for PodSecurityPolicy
+  set_fact:
+    ingress_traefik_templates: "{{ ingress_traefik_templates_for_psp + ingress_traefik_templates }}"
+  when: podsecuritypolicy_enabled
+
+- name: traefik Ingress Controller | Create manifests
+  template:
+    src: "{{ item.file }}.j2"
+    dest: "{{ kube_config_dir }}/addons/ingress_traefik/{{ item.file }}"
+  with_items: "{{ ingress_traefik_templates }}"
+  register: ingress_traefik_manifests
+  when:
+    - inventory_hostname == groups['kube-master'][0]
+
+- name: traefik Ingress Controller | Apply manifests
+  kube:
+    name: "{{ item.item.name }}"
+    namespace: "{{ ingress_traefik_namespace }}"
+    kubectl: "{{ bin_dir }}/kubectl"
+    resource: "{{ item.item.type }}"
+    filename: "{{ kube_config_dir }}/addons/ingress_traefik/{{ item.item.file }}"
+    state: "latest"
+  with_items: "{{ ingress_traefik_manifests.results }}"
+  when:
+    - inventory_hostname == groups['kube-master'][0]
